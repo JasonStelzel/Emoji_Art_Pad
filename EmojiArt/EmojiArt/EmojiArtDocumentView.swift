@@ -96,12 +96,20 @@ struct EmojiArtDocumentView: View {
         )
     }
     
-    @State private var zoomScale: CGFloat = 1
+    @State private var steadyStateZoomScale: CGFloat = 1
+    @GestureState private var gestureZoomScale: CGFloat = 1
+    
+    private var zoomScale: CGFloat {
+        steadyStateZoomScale * gestureZoomScale
+    }
     
     private func zoomGesture() -> some Gesture {
         MagnificationGesture()
+            .updating($gestureZoomScale) { latestGestureScale, gestureZoomScaleInOut, transaction in
+                gestureZoomScaleInOut = latestGestureScale
+            }
             .onEnded { gestureScaleAtEnd in
-                zoomScale *= gestureScaleAtEnd
+                steadyStateZoomScale *= gestureScaleAtEnd
             }
     }
     
@@ -118,7 +126,7 @@ struct EmojiArtDocumentView: View {
         if let image = image, image.size.width > 0, image.size.height > 0, size.width > 0, size.height > 0 {
             let hZoom = size.width / image.size.width
             let vZoom = size.height / image.size.height
-            zoomScale = min(hZoom, vZoom)
+            steadyStateZoomScale = min(hZoom, vZoom)
         }
     }
     
