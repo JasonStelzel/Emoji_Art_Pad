@@ -28,16 +28,24 @@ class EmojiArtDocument: ObservableObject {
     var background: EmojiArtModel.Background { emojiArt.background }
     
     @Published var backgroundImage: UIImage?
+    @Published var backgroundImageFetchStatus = BackgroundImageFetchStatus.idle
+    
+    enum BackgroundImageFetchStatus {
+        case idle
+        case fetching
+    }
     
     private func fetchBackgroundImageDataIfNecessary() {
         backgroundImage = nil
         switch emojiArt.background {
         case .url(let url):
             // fetch image from url asynchronously on background thread
+            backgroundImageFetchStatus = .fetching
             DispatchQueue.global(qos: .userInitiated).async {
                 let imageData = try? Data(contentsOf: url)
                 // begin potential update of UI on main thread
                     DispatchQueue.main.async { [weak self] in
+                        self?.backgroundImageFetchStatus = .idle
                         // first check if intent is still valid (user may have moved on, changed mind, executed request for new background)
                         if self?.emojiArt.background == EmojiArtModel.Background.url(url) {
                             // then ensure that request itself is valid and server responded with valid data from requested url
